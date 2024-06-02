@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        #chatbot-container {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+        input[type="text"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chatbot-container"></div>
+    <script>
+        async function sendMessage(message) {
+            try {
+                const response = await fetch('https://cors-anywhere.herokuapp.com/https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer sk-proj-FFUuEwcKrCnneWtIGAZZT3BlbkFJhbKbyjo0nxlFFzEXyvO0'
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4",
+                        messages: [{"role": "user", "content": message}]
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (data.choices && data.choices.length > 0) {
+                    return data.choices[0].message.content;
+                } else {
+                    throw new Error("Invalid response format");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                return "Sorry, there was an error processing your request.";
+            }
+        }
+
+        function initializeChatbot() {
+            const container = document.getElementById('chatbot-container');
+            const chatInput = document.createElement('input');
+            const chatOutput = document.createElement('div');
+
+            chatInput.type = 'text';
+            chatInput.placeholder = 'Type your message...';
+            chatInput.style.width = '100%';
+            chatInput.style.marginBottom = '10px';
+            chatOutput.style.maxHeight = '400px';
+            chatOutput.style.overflowY = 'auto';
+            chatOutput.style.border = '1px solid #ccc';
+            chatOutput.style.padding = '10px';
+            chatOutput.style.backgroundColor = '#ffffff';
+
+            chatInput.addEventListener('keydown', async (e) => {
+                if (e.key === 'Enter') {
+                    const userMessage = chatInput.value;
+                    chatInput.value = '';
+                    const userMessageElement = document.createElement('p');
+                    userMessageElement.textContent = 'You: ' + userMessage;
+                    chatOutput.appendChild(userMessageElement);
+                    chatOutput.scrollTop = chatOutput.scrollHeight;
+
+                    const botReply = await sendMessage(userMessage);
+                    const botReplyElement = document.createElement('p');
+                    botReplyElement.textContent = 'Bot: ' + botReply;
+                    chatOutput.appendChild(botReplyElement);
+                    chatOutput.scrollTop = chatOutput.scrollHeight;
+                }
+            });
+
+            container.appendChild(chatOutput);
+            container.appendChild(chatInput);
+        }
+
+        initializeChatbot();
+    </script>
+</body>
+</html>
